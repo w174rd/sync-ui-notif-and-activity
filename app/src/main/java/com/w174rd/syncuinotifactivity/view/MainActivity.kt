@@ -1,7 +1,11 @@
 package com.w174rd.syncuinotifactivity.view
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -12,15 +16,35 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.w174rd.syncuinotifactivity.R
 import com.w174rd.syncuinotifactivity.databinding.ActivityMainBinding
 import com.w174rd.syncuinotifactivity.services.ForegroundService
+import com.w174rd.syncuinotifactivity.services.ProgressReceiver
+import com.w174rd.syncuinotifactivity.utils.Attributes.pref.key.progressKeyPref
+import com.w174rd.syncuinotifactivity.utils.Attributes.pref.progressPrefs
+import com.w174rd.syncuinotifactivity.utils.Attributes.progressReceiver.ACTION_MINUS
+import com.w174rd.syncuinotifactivity.utils.Attributes.progressReceiver.ACTION_PLUS
+import com.w174rd.syncuinotifactivity.utils.Attributes.progressReceiver.EXTRA_PROGRESS
+import com.w174rd.syncuinotifactivity.utils.Attributes.progressReceiver.UPDATE_PROGRESS
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
+    lateinit var sharedPreferences: SharedPreferences
 
-    private var progress = 0
+    private val progressReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val progressChange = intent?.getIntExtra(EXTRA_PROGRESS, 0) ?: 0
+            Log.e("MainActivity", "progressChangeeee: $progressChange")
+            if (progressChange != 0) {
+                binding.apply {
+                    progressBar.progress = progressChange
+                    txtProgress.text = "$progressChange%"
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +57,20 @@ class MainActivity : AppCompatActivity() {
             requestNotificationPermission()
         }
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(progressReceiver, IntentFilter(UPDATE_PROGRESS))
+
+        initialProgressData()
         onClick()
+    }
+
+    private fun initialProgressData() {
+        sharedPreferences = getSharedPreferences(progressPrefs, Context.MODE_PRIVATE)
+        val progress = sharedPreferences.getInt(progressKeyPref, 0)
+
+        binding.apply {
+            progressBar.progress = progress
+            txtProgress.text = "$progress%"
+        }
     }
 
     private fun onClick() {
@@ -46,24 +83,29 @@ class MainActivity : AppCompatActivity() {
             btnStopFgService.setOnClickListener {
                 val serviceIntent = Intent(this@MainActivity, ForegroundService::class.java)
                 stopService(serviceIntent)
+                sharedPreferences.edit().remove(progressKeyPref).apply()
+                initialProgressData()
             }
 
             btnPlus.setOnClickListener {
-                if (progress < 100) {
-                    progress += 5
-                    progressBar.progress = progress
-                    txtProgress.text = "$progress%"
+                val plusIntent = Intent(this@MainActivity, ProgressReceiver::class.java).apply {
+                    action = ACTION_PLUS
                 }
+                sendBroadcast(plusIntent)
             }
 
             btnMinus.setOnClickListener {
-                if (progress > 0) {
-                    progress -= 5
-                    progressBar.progress = progress
-                    txtProgress.text = "$progress%"
+                val minusIntent = Intent(this@MainActivity, ProgressReceiver::class.java).apply {
+                    action = ACTION_MINUS
                 }
+                sendBroadcast(minusIntent)
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(progressReceiver)
     }
 
     private val permissionLauncher = registerForActivityResult(

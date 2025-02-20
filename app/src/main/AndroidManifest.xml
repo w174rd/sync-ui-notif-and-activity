@@ -31,6 +31,9 @@
             android:foregroundServiceType="dataSync"
             tools:ignore="ForegroundServicePermission" />
 
+        <receiver android:name=".services.ProgressReceiver"
+            android:exported="false"/>
+
     </application>
 
 </manifest>
