@@ -83,11 +83,26 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <ProgressBar
+                        android:id="@+id/progress_bar"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
+                        android:max="100"
+                        android:progressTint="@android:color/holo_green_light" />
 
+                    <TextView
+                        android:id="@+id/txt_progress"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0%"
+                        android:layout_gravity="end"/>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="30dp"
                         android:orientation="horizontal">
 
                         <TextView

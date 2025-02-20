@@ -20,6 +20,8 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
 
+    private var progress = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -47,11 +49,19 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnPlus.setOnClickListener {
-
+                if (progress < 100) {
+                    progress += 5
+                    progressBar.progress = progress
+                    txtProgress.text = "$progress%"
+                }
             }
 
-            btnPlus.setOnClickListener {
-
+            btnMinus.setOnClickListener {
+                if (progress > 0) {
+                    progress -= 5
+                    progressBar.progress = progress
+                    txtProgress.text = "$progress%"
+                }
             }
         }
     }
